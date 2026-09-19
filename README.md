@@ -107,7 +107,7 @@ If your server runs on AMD64 / x86_64 hardware, the Docker image/platform config
 ## 1. Clone the repository
 
 ```bash
-git clone <REPOSITORY_URL>
+git clone https://github.com/bsimokop-rgb/valheim-vanillaplus-server.git
 cd valheim-vanillaplus-server
 ```
 
