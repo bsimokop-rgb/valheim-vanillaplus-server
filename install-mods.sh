@@ -15,6 +15,10 @@ if [ ! -d "$SERVER_DIR/BepInEx" ]; then
 fi
 
 mkdir -p "$PLUGINS_DIR" "$CONFIG_DIR" "$TMP_DIR"
+
+# Remove incompatible plugin bundled by the Docker image
+rm -f "$PLUGINS_DIR/ServerDevcommands.dll"
+
 cd "$TMP_DIR"
 
 echo "== Updating BepInExPack to 5.4.2350 =="
