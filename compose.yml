@@ -1,0 +1,30 @@
+services:
+  valheim:
+    image: tsxcloud/valheim-arm:arm64-fex
+    platform: linux/arm64
+    container_name: valheim-vanillaplus
+    restart: unless-stopped
+    stop_grace_period: 40s
+
+    ports:
+      - "2456:2456/udp"
+      - "2457:2457/udp"
+      - "2458:2458/udp"
+
+    environment:
+      SERVER_NAME: "${SERVER_NAME}"
+      SERVER_WORLD: "${SERVER_WORLD}"
+      SERVER_PASSWORD: "${SERVER_PASSWORD}"
+
+      SERVER_VISIBILITY: "${SERVER_VISIBILITY}"
+      ENABLE_CROSSPLAY: "${ENABLE_CROSSPLAY}"
+      ENABLE_PLUGINS: "${ENABLE_PLUGINS}"
+
+      SERVER_SAVE_INTERVAL: "${SERVER_SAVE_INTERVAL}"
+      SERVER_BACKUPS: "${SERVER_BACKUPS}"
+      SERVER_BACKUP_SHORT: "${SERVER_BACKUP_SHORT}"
+      SERVER_BACKUP_LONG: "${SERVER_BACKUP_LONG}"
+
+    volumes:
+      - ./valheim/server:/root/valheim-server
+      - ./valheim/saves:/root/.config/unity3d/IronGate/Valheim

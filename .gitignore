@@ -1,0 +1,19 @@
+# Local environment / secrets
+.env
+
+# Runtime Valheim data
+valheim/server/
+valheim/saves/
+
+# Backups / archives
+*.tar.gz
+*.zip
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Temporary files
+tmp/
