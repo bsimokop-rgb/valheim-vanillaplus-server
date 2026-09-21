@@ -6,7 +6,7 @@ This repository contains:
 
 - Docker server configuration
 - automatic server-side mod installation
-- a ready-to-import Thunderstore client profile
+- a legacy Thunderstore client profile snapshot
 - recommended client mod configuration
 - save and backup configuration
 - troubleshooting and recovery notes
@@ -30,12 +30,12 @@ Tested server-side stack:
 | Mod | Version |
 | --- | --- |
 | BepInExPack Valheim | 5.4.2350 |
-| Jotunn | 2.30.1 |
+| Jotunn | 2.30.2 |
 | PlantEverything | 1.21.2 |
 | Seasonality | 3.8.3 |
 | YamlDotNet | 16.3.1 |
-| RecyclePlus | 1.3.3 |
-| Sailing | 1.1.8 |
+| RecyclePlus | 1.3.5 |
+| Server_devcommands | 1.113.0 |
 
 ### Intentionally excluded
 
@@ -46,8 +46,9 @@ These mods were tested but removed because of compatibility or stability problem
 | Groups | 1.2.10 | `MissingMethodException` / Chat & ConsoleCommand incompatibility |
 | InventorySlots | 1.5.4 | instability during testing |
 | TargetPortal | 1.2.3 | Harmony / API compatibility errors |
+| Sailing | 1.1.8 | removed from the current server pack; stale `Sailing.dll` is cleaned automatically |
 
-`ServerDevcommands.dll`, which may be bundled by the Docker image during initial setup, is automatically removed by `install-mods.sh` because the bundled version is incompatible with the current Valheim build.
+`install-mods.sh` installs the tested `ServerDevcommands.dll` from `Server_devcommands` `1.113.0`, replacing an existing DLL at the server plugin path if necessary.
 
 ---
 
@@ -58,37 +59,36 @@ Players should use the same versions of all server-synced mods.
 ### Required / server-synced
 
 - BepInExPack Valheim `5.4.2350`
-- Jotunn `2.30.1`
+- Jotunn `2.30.2`
 - PlantEverything `1.21.2`
 - Seasonality `3.8.3`
 - YamlDotNet `16.3.1`
-- RecyclePlus `1.3.3`
-- Sailing `1.1.8`
+- RecyclePlus `1.3.5`
 
 ### Client-side QoL
 
-These are included in the recommended client profile but do not need to be installed on the dedicated server:
+These are optional client-side additions from the legacy client profile and do not need to be installed on the dedicated server:
 
 - PlantEasily `2.2.0`
 - RunicBuildCamera `1.0.4`
 - CraftFromContainers `4.0.30`
 - BetterUI ForeverMaintained `2.5.12`
 
-Using the included Thunderstore profile is recommended so all players use the tested configuration.
+The included Thunderstore profile is retained only as a legacy snapshot and is not recommended for the current server modpack.
 
 ---
 
 # Thunderstore Client Profile
 
-A ready-to-import Thunderstore profile is included in this repository:
+A Thunderstore profile snapshot is included at:
 
 ```text
 client-profile/TutSpokiino_VanillaPlus.r2z
 ```
 
-The profile contains the complete tested client modpack with matching versions for the dedicated server.
+The bundled `.r2z` is **legacy** and does **not** match the current server modpack. Do not import it for the current server setup.
 
-## Included Client Mods
+## Legacy Profile Contents
 
 | Mod | Version | Type |
 | --- | --- | --- |
@@ -104,24 +104,11 @@ The profile contains the complete tested client modpack with matching versions f
 | CraftFromContainers | 4.0.30 | Client QoL |
 | BetterUI ForeverMaintained | 2.5.12 | Client QoL |
 
-The exported profile has been cleaned of obsolete InventorySlots and QuickStack configuration files.
+The current server instead expects Jotunn `2.30.2` and RecyclePlus `1.3.5`, and `Sailing` is intentionally excluded.
 
-## Importing the Thunderstore Profile
+Before sharing a client profile for the current server, export a new Thunderstore `.r2z` with matching server-synced versions and replace the legacy file in `client-profile/`.
 
-1. Install and open Thunderstore Mod Manager.
-2. Select **Valheim**.
-3. Open the profile import option.
-4. Choose to import a profile from a file.
-5. Select:
-
-```text
-client-profile/TutSpokiino_VanillaPlus.r2z
-```
-
-6. Allow Thunderstore to install the profile and dependencies.
-7. Launch Valheim using **Modded** mode.
-
-Do not manually enable `Groups`, `InventorySlots`, `TargetPortal`, or other untested server-synced mods.
+Do not manually enable `Groups`, `InventorySlots`, `TargetPortal`, `Sailing`, or other untested server-synced mods.
 
 Additional client-only mods should also be tested before adding them to the shared profile.
 
@@ -135,6 +122,7 @@ You need:
 - Docker Compose
 - `curl`
 - `unzip`
+- `python3`
 
 ## Architecture
 
@@ -242,14 +230,14 @@ Run:
 
 The script will automatically:
 
-1. remove the incompatible bundled `ServerDevcommands.dll` if present
-2. update BepInExPack to `5.4.2350`
-3. install Jotunn `2.30.1`
+1. remove stale `Sailing.dll` if present
+2. install BepInExPack Valheim `5.4.2350`
+3. install Jotunn `2.30.2`
 4. install PlantEverything `1.21.2`
 5. install Seasonality `3.8.3`
 6. install YamlDotNet `16.3.1`
-7. install RecyclePlus `1.3.3`
-8. install Sailing `1.1.8`
+7. install RecyclePlus `1.3.5`
+8. install Server_devcommands `1.113.0`
 
 The script does not install or replace a world save.
 
@@ -263,17 +251,24 @@ Server modpack installed successfully.
 
 # Starting the Server
 
-Foreground mode:
+Recommended foreground mode:
 
 ```bash
-docker compose up
+./start-server.sh
 ```
+
+`start-server.sh` runs `update-mods.sh` before startup. If the updater fails, the server still starts with the currently installed mods.
+
+The current `start-server.sh` is macOS-oriented because it invokes `caffeinate` while the server is running. On other platforms, run `./update-mods.sh` manually and then start Docker Compose directly.
 
 Detached/background mode:
 
 ```bash
+./update-mods.sh
 docker compose up -d
 ```
+
+Running `docker compose up -d` by itself bypasses the automatic mod-update check in `start-server.sh`.
 
 Follow logs:
 
@@ -400,12 +395,12 @@ Advize_PlantEverything.dll
 Seasonality.dll
 YamlDotNet.dll
 RecyclePlus.dll
-Sailing.dll
+ServerDevcommands.dll
 ```
 
 The Docker image may also include its own utility plugins.
 
-`ServerDevcommands.dll` should **not** be present after running `install-mods.sh`.
+`ServerDevcommands.dll` should be present after running `install-mods.sh`.
 
 To verify:
 
@@ -420,7 +415,7 @@ find ./valheim/server/BepInEx/plugins \
 Expected result:
 
 ```text
-(no output)
+./valheim/server/BepInEx/plugins/ServerDevcommands.dll
 ```
 
 ---
@@ -485,21 +480,19 @@ Check:
 4. UDP ports `2456-2458` are forwarded
 5. firewall allows Docker / Valheim traffic
 6. the correct public or LAN IP is being used
-7. the player launched Valheim in **Modded** mode when using the shared profile
+7. the player launched Valheim in **Modded** mode with the required matching client mods
 
 ---
 
 ## Mod Version Mismatch
 
-The simplest fix is to import the included Thunderstore profile again:
+Do **not** use the bundled `.r2z` as a fix for the current server; it is a legacy snapshot with outdated server-synced versions.
 
-```text
-client-profile/TutSpokiino_VanillaPlus.r2z
-```
+Match the client to the current server versions listed under **Recommended Client Mods**. If the shared client modpack changes, export a fresh Thunderstore profile and replace the legacy `.r2z` in `client-profile/`.
 
-Avoid individually updating mods on only one client.
+Avoid updating only one client or only one side of a server-synced mod pair.
 
-A newer mod version is not automatically better for an existing server.
+A newer mod version is not automatically compatible with the current Valheim build or the rest of the modpack.
 
 ---
 
@@ -548,6 +541,16 @@ If death or respawn causes infinite loading, compare behavior on a temporary fre
 
 Do not blindly update a working server.
 
+For normal foreground startup, `start-server.sh` runs `update-mods.sh` automatically before starting Valheim.
+
+To check and apply server-mod updates manually:
+
+```bash
+./update-mods.sh
+```
+
+The updater tracks installed versions in `.mod-versions`. If an individual update fails, the existing DLL is preserved and the failure is reported in the summary. After server-synced mods change, players must use matching versions.
+
 Recommended process:
 
 1. stop the server cleanly
@@ -581,19 +584,25 @@ valheim-vanillaplus-server/
 ├── README.md
 ├── compose.yml
 ├── install-mods.sh
+├── start-server.sh
+├── update-mods.sh
 └── client-profile/
     └── TutSpokiino_VanillaPlus.r2z
 ```
 
-Generated locally after first launch:
+Generated locally:
 
 ```text
 valheim/
 ├── server/
 └── saves/
+
+.mod-versions
 ```
 
-Those runtime directories are intentionally excluded from the repository.
+`valheim/` contains runtime/server data. `.mod-versions` stores the locally installed server-mod versions used by `update-mods.sh`.
+
+These local runtime/state files should not be committed.
 
 The local `.env` file is also excluded and must never be committed.
 
@@ -617,6 +626,10 @@ Generate fresh world
 Stop server
     ↓
 Run install-mods.sh
+    ↓
+Run start-server.sh
+    ↓
+Check/update tracked server mods
     ↓
 Start modded server
     ↓

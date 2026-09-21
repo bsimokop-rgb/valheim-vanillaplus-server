@@ -17,3 +17,7 @@ valheim/saves/
 
 # Temporary files
 tmp/
+
+# Local state / backups
+.mod-versions
+README.md.bak
